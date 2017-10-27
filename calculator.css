@@ -1,0 +1,28 @@
+#numButton {
+  -fx-border-color: #40606d;
+  -fx-background-color: #679aaf;
+  -fx-text-fill: #40606d;
+}
+
+#opButton {
+  -fx-border-color: #40606d;
+  -fx-background-color: #e56262;
+  -fx-text-fill: #40606d;
+}
+
+.button {
+  -fx-font-size: 40px;
+  -fx-pref-height: 86px;
+  -fx-pref-width: 95px;
+  -fx-max-height: 86px;
+  -fx-max-width: 95px;
+  -fx-min-height: 86px;
+  -fx-min-width: 95px;
+  -fx-border-style: solid;
+  -fx-border-width: 3px;
+  -fx-background-radius: 10px;
+  -fx-border-radius: 10px;
+  -fx-border-insets: 0px;
+  -fx-background-insets: 1px;
+  -fx-content-display: CENTER;
+}
