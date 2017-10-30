@@ -73,6 +73,9 @@ public class Controller {
     private Button delete;
 
     @FXML
+    private Button pow;
+
+    @FXML
     private Label label;
 
     private long num;
@@ -232,6 +235,14 @@ public class Controller {
                 numRightPar--;
             }
             text.setText(old.substring(0,old.length()-1));
+        }
+    }
+    public void pow_click(){
+        label.setText("");
+        String old = text.getText();
+        if(isLegal(old)){
+            String add = "^";
+            text.setText(old + add);
         }
     }
 
