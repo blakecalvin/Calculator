@@ -5,6 +5,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
+import java.util.Stack;
+
 public class Controller {
 
     @FXML
@@ -76,6 +78,8 @@ public class Controller {
     private long num;
     private int numLeftPar = 0;
     private int numRightPar = 0;
+    private Stack<Integer> left;
+    private Stack<Integer> right;
 
     public void one_click(){
         label.setText("");
@@ -147,7 +151,7 @@ public class Controller {
     public void rightPar_click() {
         label.setText("");
         String old = text.getText();
-        if(old.length() > 0 && old.contains("(") && isLegal(old)){
+        if(old.length() > 0 && old.contains("(") && isLegal(old) && numRightPar < numLeftPar){
             String add = ")";
             text.setText(old + add);
             numRightPar++;
@@ -244,13 +248,26 @@ public class Controller {
     }
 
     public String solve(String old){
-        if(old.charAt(0) == '(' && old.charAt(old.length()-1) == ')'){
-            old = old.substring(1, old.length()-1);
+        if(old.charAt(0) == '(' && old.charAt(old.length()-1) == ')') {
+            old = old.substring(1, old.length() - 1);
         }
-        for(int i = 0; i<old.length(); i++){
 
+        String prev;
+        String post;
+        char op;
+
+        for(int i = 0; i<old.length(); i++){
+            if(old.charAt(i) == '('){
+                left.push(i);
+            }
+            else if(old.charAt(i) == ')'){
+                String newStr = old.substring(left.pop()+1, i);
+                String val = solve(newStr);
+            }
         }
+
         return old;
     }
 
 }
+
