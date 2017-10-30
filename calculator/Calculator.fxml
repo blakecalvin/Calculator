@@ -122,7 +122,7 @@
                   <Font size="40.0" />
                </font>
             </Button>
-            <Button id="delButton" fx:id="delete" mnemonicParsing="false" onAction="#delete_click" stylesheets="@calculator.css" text="DEL" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+            <Button id="opButton" fx:id="pow" mnemonicParsing="false" onAction="#pow_click" stylesheets="@calculator.css" text="^" GridPane.columnIndex="4" GridPane.rowIndex="3" />
             <Button id="opButton" fx:id="clear" mnemonicParsing="false" onAction="#clear_click" stylesheets="@calculator.css" text="C" GridPane.rowIndex="3" />
          </children>
       </GridPane>
