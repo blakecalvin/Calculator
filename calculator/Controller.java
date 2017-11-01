@@ -78,11 +78,19 @@ public class Controller {
     @FXML
     private Label label;
 
-    private long num;
+    private double num = 0;
     private int numLeftPar = 0;
     private int numRightPar = 0;
-    private Stack<Integer> left;
-    private Stack<Integer> right;
+    private Stack<Integer> left = new Stack<>();
+    private Stack<Integer> right = new Stack<>();
+    private char[] operators = {'+','-','*','/','^',')','('};
+
+    @FXML
+    public void initialize() {
+        text.setPromptText("0");
+        text.setEditable(false);
+    }
+
 
     public void one_click(){
         label.setText("");
@@ -147,6 +155,10 @@ public class Controller {
     public void leftPar_click(){
         label.setText("");
         String old = text.getText();
+
+        int location = old.length();
+        left.push(location);
+
         String add = "(";
         text.setText(old + add);
         numLeftPar++;
@@ -154,6 +166,7 @@ public class Controller {
     public void rightPar_click() {
         label.setText("");
         String old = text.getText();
+
         if(old.length() > 0 && old.contains("(") && isLegal(old) && numRightPar < numLeftPar){
             String add = ")";
             text.setText(old + add);
@@ -166,6 +179,7 @@ public class Controller {
     public void plus_click(){
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = "+";
             text.setText(old + add);
@@ -174,6 +188,7 @@ public class Controller {
     public void minus_click(){
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = "-";
             text.setText(old + add);
@@ -183,6 +198,7 @@ public class Controller {
     public void multi_click(){
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = "*";
             text.setText(old + add);
@@ -192,6 +208,7 @@ public class Controller {
     public void div_click(){
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = "/";
             text.setText(old + add);
@@ -201,8 +218,16 @@ public class Controller {
     public void equal_click(){
         if(numRightPar == numLeftPar){
             String old = text.getText();
-            String answer = solve(old);
-            label.setText(answer);
+            double answer = solve(old);
+            String ans = "";
+            if(answer % 1 == 0){
+                int a = (int)answer;
+                ans = Integer.toString(a);
+            }
+            else{
+                ans = Double.toString(answer);
+            }
+            label.setText(ans);
         }
         else {
             label.setText("ERROR");
@@ -215,10 +240,13 @@ public class Controller {
         text.setText("");
         numRightPar = 0;
         numLeftPar = 0;
+        left.clear();
+        right.clear();
     }
     public void point_click(){   //Create way to check for multiple inputs
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = ".";
             text.setText(old + add);
@@ -227,6 +255,7 @@ public class Controller {
     public void delete_click(){
         label.setText("");
         String old = text.getText();
+
         if(old.length() > 0){
             if(old.charAt(old.length()-1)=='('){
                 numLeftPar--;
@@ -240,6 +269,7 @@ public class Controller {
     public void pow_click(){
         label.setText("");
         String old = text.getText();
+
         if(isLegal(old)){
             String add = "^";
             text.setText(old + add);
@@ -247,7 +277,10 @@ public class Controller {
     }
 
     public boolean isLegal(String old){
-        if(old.substring(old.length()-1).equals("+") ||
+        if(old.length() == 0){
+            return false;
+        }
+        else if(old.substring(old.length()-1).equals("+") ||
                 old.substring(old.length()-1).equals("-") ||
                 old.substring(old.length()-1).equals("*") ||
                 old.substring(old.length()-1).equals("/") ||
@@ -258,27 +291,108 @@ public class Controller {
         return true;
     }
 
-    public String solve(String old){
+    public double solve(String old){
+
         if(old.charAt(0) == '(' && old.charAt(old.length()-1) == ')') {
             old = old.substring(1, old.length() - 1);
         }
 
-        String prev;
-        String post;
-        char op;
+        boolean cont = true;
+        double val1 = 0;
+        String prev = "";
+        String post = "";
+        double val2 = 0;
+        char op1 = ' ';
+        char op2 = ' ';
 
-        for(int i = 0; i<old.length(); i++){
-            if(old.charAt(i) == '('){
-                left.push(i);
+        int i = 0;
+        while(cont || i<old.length()){
+            if(old.length() == 1){
+                return Double.parseDouble(old);
             }
-            else if(old.charAt(i) == ')'){
-                String newStr = old.substring(left.pop()+1, i);
-                String val = solve(newStr);
+            else if(prev.equals("") || op1 == ' '){
+                if(contains(old.charAt(i)) == false){
+                    prev += old.charAt(i);
+                }
+                else{
+                    op1 = old.charAt(i);
+                }
+            }
+
+            else if(post.equals("")){
+                if(contains(old.charAt(i)) == false && i < old.length() -1){
+                    post += old.charAt(i);
+                }
+                else if(i < old.length()-1 && contains(old.charAt(i)) == true){
+                    op2 = old.charAt(i);
+                    val1 = Double.parseDouble(prev);
+                    val2 = Double.parseDouble(post);
+                    double ans = operation(val1, op1, val2);
+                    double rest = solve(old.substring(i+1, old.length()));
+                    return operation(ans, op2, rest);
+                }
+                else if(i == old.length() -1){
+                    post += old.charAt(i);
+                    val1 = Double.parseDouble(prev);
+                    val2 = Double.parseDouble(post);
+                    double ans = operation(val1, op1, val2);
+                    return ans;
+                }
+            }
+
+            else if(old.charAt(i) == '(' && i < old.length()-2){
+                left.push(i);
+                int countL = 1;
+                int countR = 0;
+                int j = i + 1;
+                while(countL != countR){
+                    if(old.charAt(j) == '(') countL++;
+                    else if(old.charAt(j) == ')') countR++;
+                    else j++;
+                }
+                String newStr = old.substring(left.pop()+1, j);
+                double val = solve(newStr);
+
+            }
+            System.out.print(prev + "," + post);
+            i++;
+        }
+        return 0;
+    }
+
+    public double operation(double val1, char op, double val2){
+        switch(op){
+            case('+'):
+                return val1+val2;
+            case('-'):
+                return val1-val2;
+            case('*'):
+                return val1*val2;
+            case('/'):
+                return val1/val2;
+            case('^'):
+                return Math.pow(val1,val2);
+            case('('):
+
+                break;
+            case(')'):
+
+                break;
+            default:
+                return 0;
+        }
+        return 0;
+    }
+
+    public boolean contains(char one){
+        for(char x: operators){
+            if(one == x){
+                return true;
             }
         }
-
-        return old;
+        return false;
     }
+
 
 }
 
