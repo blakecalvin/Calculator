@@ -5,6 +5,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class Controller {
@@ -79,18 +80,24 @@ public class Controller {
     private Label label;
 
     private double num = 0;
+
     private int numLeftPar = 0;
     private int numRightPar = 0;
     private Stack<Integer> left = new Stack<>();
     private Stack<Integer> right = new Stack<>();
+
     private char[] operators = {'+','-','*','/','^',')','('};
+
+    private ArrayList<Integer> operator = new ArrayList<>();
+    private ArrayList<Integer> firstOp = new ArrayList<>();
+    private ArrayList<Integer> secondOp = new ArrayList<>();
+
 
     @FXML
     public void initialize() {
         text.setPromptText("0");
         text.setEditable(false);
     }
-
 
     public void one_click(){
         label.setText("");
@@ -156,12 +163,12 @@ public class Controller {
         label.setText("");
         String old = text.getText();
 
-        int location = old.length();
-        left.push(location);
-
         String add = "(";
         text.setText(old + add);
         numLeftPar++;
+
+        int location = old.length()-1;
+        left.push(location);
     }
     public void rightPar_click() {
         label.setText("");
@@ -171,6 +178,9 @@ public class Controller {
             String add = ")";
             text.setText(old + add);
             numRightPar++;
+
+            int location = old.length()-1;
+            right.push(location);
         }
         else {
             label.setText("ERROR");
@@ -183,6 +193,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "+";
             text.setText(old + add);
+
+            operator.add(old.length()-1);
+            secondOp.add(old.length()-1);
         }
     }
     public void minus_click(){
@@ -192,6 +205,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "-";
             text.setText(old + add);
+
+            operator.add(old.length()-1);
+            secondOp.add(old.length()-1);
         }
 
     }
@@ -202,6 +218,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "*";
             text.setText(old + add);
+
+            operator.add(old.length()-1);
+            firstOp.add(old.length()-1);
         }
 
     }
@@ -212,13 +231,16 @@ public class Controller {
         if(isLegal(old)){
             String add = "/";
             text.setText(old + add);
+
+            operator.add(old.length()-1);
+            firstOp.add(old.length()-1);
         }
 
     }
     public void equal_click(){
         if(numRightPar == numLeftPar){
             String old = text.getText();
-            double answer = solve(old);
+            double answer = order(old);
             String ans = "";
             if(answer % 1 == 0){
                 int a = (int)answer;
@@ -236,12 +258,14 @@ public class Controller {
 
     public void clear_click(){
         label.setText("");
-        String old = text.getText();
         text.setText("");
         numRightPar = 0;
         numLeftPar = 0;
         left.clear();
         right.clear();
+        operator.clear();
+        firstOp.clear();
+        secondOp.clear();
     }
     public void point_click(){   //Create way to check for multiple inputs
         label.setText("");
@@ -273,6 +297,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "^";
             text.setText(old + add);
+
+            operator.add(old.length()-1);
+            firstOp.add(old.length()-1);
         }
     }
 
@@ -289,6 +316,35 @@ public class Controller {
             return false;
         }
         return true;
+    }
+
+    public double order(String older){
+
+        String old = implicitMulti(older);
+        text.setText(old);
+
+        /*
+        for(int i = 0; i <= numLeftPar; i++){
+            int start;
+            int stop;
+            if(i < numLeftPar){
+                start = left.pop();
+                stop = right.pop();
+            }
+            else{
+                start = 0;
+                stop = old.length();
+            }
+            double answer = solve(old.substring(start + 1, stop));
+            String replacement = Double.toString(answer);
+
+            old.replace(old.substring(start , stop + 1), replacement);
+        }
+
+        double finalAnswer = Double.parseDouble(old);
+        return finalAnswer;
+        */
+        return 0.0;
     }
 
     public double solve(String old){
@@ -360,6 +416,18 @@ public class Controller {
         return 0;
     }
 
+    public String implicitMulti(String old){
+        for(int i = 1; i < old.length()-1; i++){
+            if(old.charAt(i) == '(' && contains(old.charAt(i-1)) == false){
+                old = old.replace(old.substring(i,i+1),"*(");
+            }
+            else if(old.charAt(i) == ')' && contains(old.charAt(i+1)) == false){
+                old = old.replace(old.substring(i,i+1),")*");
+            }
+        }
+        return old;
+    }
+
     public double operation(double val1, char op, double val2){
         switch(op){
             case('+'):
@@ -372,16 +440,9 @@ public class Controller {
                 return val1/val2;
             case('^'):
                 return Math.pow(val1,val2);
-            case('('):
-
-                break;
-            case(')'):
-
-                break;
             default:
                 return 0;
         }
-        return 0;
     }
 
     public boolean contains(char one){
@@ -395,4 +456,3 @@ public class Controller {
 
 
 }
-
