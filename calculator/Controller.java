@@ -81,7 +81,7 @@ public class Controller {
     private int numLeftPar = 0;
     private int numRightPar = 0;
 
-    private char[] operators = {'+','-','*','/','^',')','('};
+    private char[] operators = {'+','-','*','/','^','(',')'};
 
     protected int roundOff = 3;
 
@@ -154,8 +154,13 @@ public class Controller {
     public void leftPar_click(){
         label.setText("");
         String old = text.getText();
-
-        String add = "(";
+        String add;
+        if(old.length() > 0 && old.charAt(old.length()-1) == ')'){
+            add = "*(";
+        }
+        else{
+            add = "(";
+        }
         text.setText(old + add);
         numLeftPar++;
     }
@@ -393,11 +398,23 @@ public class Controller {
 
     public String implicitMulti(String old){
         for(int i = 1; i < old.length()-1; i++){
+            System.out.println("i:"+i+" s:" + old);
+            String one;
+            String two;
+            String three;
+
             if(old.charAt(i) == '(' && contains(old.charAt(i-1)) == false){
-                old = old.replace(old.substring(i,i+1),"*(");
+                System.out.println(2);
+                one = old.substring(0,i);
+                two = "*(";
+                three = old.substring(i+1,old.length());
+                old = one+two+three;
             }
             else if(old.charAt(i) == ')' && contains(old.charAt(i+1)) == false){
-                old = old.replace(old.substring(i,i+1),")*");
+                one = old.substring(0,i);
+                two = ")*";
+                three = old.substring(i+1,old.length());
+                old = one+two+three;
             }
         }
         return old;
@@ -423,6 +440,7 @@ public class Controller {
                 return val1*val2;
             case('/'):
                 if(val2 == 0){
+                    label.setText("ERROR");
                     throw new UnsupportedOperationException("Cannot divide by zero");
                 }
                 return val1/val2;
