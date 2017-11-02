@@ -5,7 +5,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-import java.util.ArrayList;
 import java.util.Stack;
 
 public class Controller {
@@ -79,19 +78,12 @@ public class Controller {
     @FXML
     private Label label;
 
-    private double num = 0;
-
     private int numLeftPar = 0;
     private int numRightPar = 0;
-    private Stack<Integer> left = new Stack<>();
-    private Stack<Integer> right = new Stack<>();
 
     private char[] operators = {'+','-','*','/','^',')','('};
 
-    private ArrayList<Integer> operator = new ArrayList<>();
-    private ArrayList<Integer> firstOp = new ArrayList<>();
-    private ArrayList<Integer> secondOp = new ArrayList<>();
-
+    protected int roundOff = 3;
 
     @FXML
     public void initialize() {
@@ -166,9 +158,6 @@ public class Controller {
         String add = "(";
         text.setText(old + add);
         numLeftPar++;
-
-        int location = old.length()-1;
-        left.push(location);
     }
     public void rightPar_click() {
         label.setText("");
@@ -178,9 +167,6 @@ public class Controller {
             String add = ")";
             text.setText(old + add);
             numRightPar++;
-
-            int location = old.length()-1;
-            right.push(location);
         }
         else {
             label.setText("ERROR");
@@ -193,21 +179,21 @@ public class Controller {
         if(isLegal(old)){
             String add = "+";
             text.setText(old + add);
-
-            operator.add(old.length()-1);
-            secondOp.add(old.length()-1);
+        }
+        else {
+            label.setText("ERROR");
         }
     }
     public void minus_click(){
         label.setText("");
         String old = text.getText();
 
-        if(isLegal(old)){
+        if(isMinusLegal(old)){
             String add = "-";
             text.setText(old + add);
-
-            operator.add(old.length()-1);
-            secondOp.add(old.length()-1);
+        }
+        else {
+            label.setText("ERROR");
         }
 
     }
@@ -218,9 +204,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "*";
             text.setText(old + add);
-
-            operator.add(old.length()-1);
-            firstOp.add(old.length()-1);
+        }
+        else {
+            label.setText("ERROR");
         }
 
     }
@@ -231,23 +217,23 @@ public class Controller {
         if(isLegal(old)){
             String add = "/";
             text.setText(old + add);
-
-            operator.add(old.length()-1);
-            firstOp.add(old.length()-1);
+        }
+        else {
+            label.setText("ERROR");
         }
 
     }
     public void equal_click(){
         if(numRightPar == numLeftPar){
             String old = text.getText();
-            double answer = order(old);
+            double answer = solve(old);
             String ans = "";
             if(answer % 1 == 0){
                 int a = (int)answer;
                 ans = Integer.toString(a);
             }
             else{
-                ans = Double.toString(answer);
+                ans = String.format("%."+roundOff+"f", answer);
             }
             label.setText(ans);
         }
@@ -261,19 +247,17 @@ public class Controller {
         text.setText("");
         numRightPar = 0;
         numLeftPar = 0;
-        left.clear();
-        right.clear();
-        operator.clear();
-        firstOp.clear();
-        secondOp.clear();
     }
-    public void point_click(){   //Create way to check for multiple inputs
+    public void point_click(){
         label.setText("");
         String old = text.getText();
 
-        if(isLegal(old)){
+        if(isLegal(old) && checkPoint(old) == false){
             String add = ".";
             text.setText(old + add);
+        }
+        else {
+            label.setText("ERROR");
         }
     }
     public void delete_click(){
@@ -297,9 +281,9 @@ public class Controller {
         if(isLegal(old)){
             String add = "^";
             text.setText(old + add);
-
-            operator.add(old.length()-1);
-            firstOp.add(old.length()-1);
+        }
+        else {
+            label.setText("ERROR");
         }
     }
 
@@ -312,108 +296,99 @@ public class Controller {
                 old.substring(old.length()-1).equals("*") ||
                 old.substring(old.length()-1).equals("/") ||
                 old.substring(old.length()-1).equals(".") ||
-                old.substring(old.length()-1).equals("(")) {
+                old.substring(old.length()-1).equals("(") ||
+                old.substring(old.length()-1).equals("^")) {
             return false;
         }
         return true;
     }
 
-    public double order(String older){
-
-        String old = implicitMulti(older);
-        text.setText(old);
-
-        /*
-        for(int i = 0; i <= numLeftPar; i++){
-            int start;
-            int stop;
-            if(i < numLeftPar){
-                start = left.pop();
-                stop = right.pop();
-            }
-            else{
-                start = 0;
-                stop = old.length();
-            }
-            double answer = solve(old.substring(start + 1, stop));
-            String replacement = Double.toString(answer);
-
-            old.replace(old.substring(start , stop + 1), replacement);
+    public boolean isMinusLegal(String old){
+        if(old.length() == 0){
+            return true;
         }
+        else if(old.substring(old.length()-1).equals("+") ||
+                old.substring(old.length()-1).equals("-") ||
+                old.substring(old.length()-1).equals("*") ||
+                old.substring(old.length()-1).equals(".")) {
+            return false;
+        }
+        return true;
+    }
 
-        double finalAnswer = Double.parseDouble(old);
-        return finalAnswer;
-        */
-        return 0.0;
+    public boolean checkPoint(String old){
+        int i = old.length()-1;
+        boolean point = false;
+        boolean op = false;
+        while(i>0 && point == false && op == false){
+            if(old.charAt(i) == '.'){
+                return true;
+            }
+            else if(contains(old.charAt(i))){
+                return false;
+            }
+            i--;
+        }
+        return false;
     }
 
     public double solve(String old){
 
-        if(old.charAt(0) == '(' && old.charAt(old.length()-1) == ')') {
-            old = old.substring(1, old.length() - 1);
+        old = implicitMulti(old);
+        System.out.println(old);
+
+        char[] tokens = old.toCharArray();
+        Stack<Double> vals = new Stack<>();
+        Stack<Character> ops = new Stack<>();
+
+        for (int i = 0; i < tokens.length; i++){
+
+            System.out.println("i: " + i);
+
+            if ((tokens[i] >= '0' && tokens[i] <= '9')|| tokens[i] == '.'
+                    || (tokens[i] == '-' && i == 0)
+                    || (tokens[i] == '-' && i>0
+                    && (tokens[i-1] == '(' || tokens[i-1] == '/' || tokens[i-1] == '^'))){
+
+                StringBuffer s = new StringBuffer();
+
+                while (i < tokens.length && ((tokens[i] >= '0' && tokens[i] <= '9')||tokens[i] == '.'
+                        || (tokens[i] == '-' && i == 0)
+                        || (tokens[i] == '-' && i>0
+                        && (tokens[i-1] == '(' || tokens[i-1] == '/' || tokens[i-1] == '^')))){
+
+                    s.append(tokens[i++]);
+                }
+
+                vals.push(Double.parseDouble(s.toString()));
+                i--;
+            }
+
+            else if (tokens[i] == '('){
+                ops.push(tokens[i]);
+            }
+
+            else if (tokens[i] == ')'){
+                while (ops.peek() != '(')
+                    vals.push(operation(ops.pop(), vals.pop(), vals.pop()));
+                ops.pop();
+            }
+
+            else if (tokens[i] == '+' || tokens[i] == '-' || tokens[i] == '*' || tokens[i] == '/' || tokens[i] == '^'){
+
+                while (!ops.empty() && hasPrecedence(tokens[i], ops.peek()))
+                    vals.push(operation(ops.pop(), vals.pop(), vals.pop()));
+
+                ops.push(tokens[i]);
+            }
+            System.out.println("vals: " + vals.toString());
+            System.out.println("ops: " + ops.toString());
         }
 
-        boolean cont = true;
-        double val1 = 0;
-        String prev = "";
-        String post = "";
-        double val2 = 0;
-        char op1 = ' ';
-        char op2 = ' ';
+        while (!ops.empty())
+            vals.push(operation(ops.pop(), vals.pop(), vals.pop()));
 
-        int i = 0;
-        while(cont || i<old.length()){
-            if(old.length() == 1){
-                return Double.parseDouble(old);
-            }
-            else if(prev.equals("") || op1 == ' '){
-                if(contains(old.charAt(i)) == false){
-                    prev += old.charAt(i);
-                }
-                else{
-                    op1 = old.charAt(i);
-                }
-            }
-
-            else if(post.equals("")){
-                if(contains(old.charAt(i)) == false && i < old.length() -1){
-                    post += old.charAt(i);
-                }
-                else if(i < old.length()-1 && contains(old.charAt(i)) == true){
-                    op2 = old.charAt(i);
-                    val1 = Double.parseDouble(prev);
-                    val2 = Double.parseDouble(post);
-                    double ans = operation(val1, op1, val2);
-                    double rest = solve(old.substring(i+1, old.length()));
-                    return operation(ans, op2, rest);
-                }
-                else if(i == old.length() -1){
-                    post += old.charAt(i);
-                    val1 = Double.parseDouble(prev);
-                    val2 = Double.parseDouble(post);
-                    double ans = operation(val1, op1, val2);
-                    return ans;
-                }
-            }
-
-            else if(old.charAt(i) == '(' && i < old.length()-2){
-                left.push(i);
-                int countL = 1;
-                int countR = 0;
-                int j = i + 1;
-                while(countL != countR){
-                    if(old.charAt(j) == '(') countL++;
-                    else if(old.charAt(j) == ')') countR++;
-                    else j++;
-                }
-                String newStr = old.substring(left.pop()+1, j);
-                double val = solve(newStr);
-
-            }
-            System.out.print(prev + "," + post);
-            i++;
-        }
-        return 0;
+        return vals.pop();
     }
 
     public String implicitMulti(String old){
@@ -428,7 +403,17 @@ public class Controller {
         return old;
     }
 
-    public double operation(double val1, char op, double val2){
+    public boolean hasPrecedence(char op1, char op2)
+    {
+        if (op2 == '(' || op2 == ')')
+            return false;
+        if ((op1 == '*' || op1 == '/' || op1 == '^') && (op2 == '+' || op2 == '-'))
+            return false;
+        else
+            return true;
+    }
+
+    public double operation( char op, double val2, double val1){
         switch(op){
             case('+'):
                 return val1+val2;
@@ -437,6 +422,9 @@ public class Controller {
             case('*'):
                 return val1*val2;
             case('/'):
+                if(val2 == 0){
+                    throw new UnsupportedOperationException("Cannot divide by zero");
+                }
                 return val1/val2;
             case('^'):
                 return Math.pow(val1,val2);
@@ -453,6 +441,5 @@ public class Controller {
         }
         return false;
     }
-
 
 }
